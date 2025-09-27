@@ -6,8 +6,10 @@ from logging import getLogger
 from recbole.utils import init_logger, init_seed
 from recbole.trainer import Trainer
 
-from model import EchoMamba4Rec
-
+from baseline_model.Duorec import DuoRec
+from baseline_model.Fearec import FEARec
+from myModel import EchoMamba4Rec
+from baseline_model.Fmlp import FMLPRecModel
 from recbole.config import Config
 from recbole.data import create_dataset, data_preparation
 from recbole.data.transform import construct_transform
@@ -22,8 +24,9 @@ from recbole.utils import (
 )
 
 if __name__ == '__main__':
-
-    config = Config(model=EchoMamba4Rec, config_file_list=['config.yaml'])
+    config = Config(model=EchoMamba4Rec, config_file_list=['config/config.yaml'],config_dict={
+        'train_neg_sample_args': None  # 覆盖配置文件，解决CE与负采样的冲突
+    })
     init_seed(config['seed'], config['reproducibility'])
     
     

@@ -1,0 +1,228 @@
+Mon 22 Sep 2025 17:14:57 INFO  ['run.py']
+Mon 22 Sep 2025 17:14:57 INFO  
+General Hyper Parameters:
+gpu_id = 0
+use_gpu = True
+seed = 2020
+state = INFO
+reproducibility = True
+data_path = dataset/nyc
+checkpoint_dir = saved
+show_progress = True
+save_dataset = False
+dataset_save_path = None
+save_dataloaders = False
+dataloaders_save_path = None
+log_wandb = True
+
+Training Hyper Parameters:
+epochs = 300
+train_batch_size = 256
+learner = adam
+learning_rate = 0.001
+train_neg_sample_args = {'distribution': 'none', 'sample_num': 'none', 'alpha': 'none', 'dynamic': False, 'candidate_num': 0}
+eval_step = 1
+stopping_step = 10
+clip_grad_norm = None
+weight_decay = 0.0
+loss_decimal_place = 4
+
+Evaluation Hyper Parameters:
+eval_args = {'split': {'LS': 'valid_and_test'}, 'order': 'TO', 'group_by': 'user', 'mode': {'valid': 'full', 'test': 'full'}}
+repeatable = True
+metrics = ['Hit', 'NDCG', 'MRR']
+topk = [10, 20]
+valid_metric = NDCG@10
+valid_metric_bigger = True
+eval_batch_size = 512
+metric_decimal_place = 4
+
+Dataset Hyper Parameters:
+field_separator = 	
+seq_separator =  
+USER_ID_FIELD = user_id
+ITEM_ID_FIELD = item_id
+RATING_FIELD = rating
+TIME_FIELD = timestamp
+seq_len = None
+LABEL_FIELD = label
+threshold = None
+NEG_PREFIX = neg_
+load_col = {'inter': ['user_id', 'item_id', 'timestamp']}
+unload_col = None
+unused_col = None
+additional_feat_suffix = None
+rm_dup_inter = None
+val_interval = None
+filter_inter_by_user_or_item = True
+user_inter_num_interval = [5,inf)
+item_inter_num_interval = [5,inf)
+alias_of_user_id = None
+alias_of_item_id = None
+alias_of_entity_id = None
+alias_of_relation_id = None
+preload_weight = None
+normalize_field = None
+normalize_all = None
+ITEM_LIST_LENGTH_FIELD = item_length
+LIST_SUFFIX = _list
+MAX_ITEM_LIST_LENGTH = 200
+POSITION_FIELD = position_id
+HEAD_ENTITY_ID_FIELD = head_id
+TAIL_ENTITY_ID_FIELD = tail_id
+RELATION_ID_FIELD = relation_id
+ENTITY_ID_FIELD = entity_id
+benchmark_filename = None
+
+Other Hyper Parameters: 
+worker = 0
+wandb_project = recbole
+shuffle = True
+require_pow = False
+enable_amp = False
+enable_scaler = False
+transform = None
+numerical_features = []
+discretization = None
+kg_reverse_r = False
+entity_kg_num_interval = [0,inf)
+relation_kg_num_interval = [0,inf)
+MODEL_TYPE = ModelType.SEQUENTIAL
+hidden_size = 64
+num_layers = 1
+dropout_prob = 0.2
+loss_type = CE
+d_state = 32
+d_conv = 4
+expand = 2
+initializer_range = 0.02
+num_experts = 2
+num_heads = 8
+hidden_dim = 3
+early_stop = True
+early_stop_metric = HR@10
+early_stop_mode = max
+early_stop_patience = 5
+save_best_model = True
+lmd = 0.1
+lmd_sem = 0.1
+tau = 1
+contrast = us_x
+sim = dot
+hidden_dropout_prob = 0.5
+attn_dropout_prob = 0.5
+inner_size = 256
+MODEL_INPUT_TYPE = InputType.POINTWISE
+eval_type = EvaluatorType.RANKING
+single_spec = True
+local_rank = 0
+device = cuda
+valid_neg_sample_args = {'distribution': 'uniform', 'sample_num': 'none'}
+test_neg_sample_args = {'distribution': 'uniform', 'sample_num': 'none'}
+
+
+Mon 22 Sep 2025 17:14:59 INFO  nyc
+The number of users: 6196
+Average actions of users: 77.3047619047619
+The number of items: 4501
+Average actions of items: 106.42288888888889
+The number of inters: 478903
+The sparsity of the dataset: 98.28277526448824%
+Remain Fields: ['user_id', 'item_id', 'timestamp']
+Mon 22 Sep 2025 17:15:03 INFO  [Training]: train_batch_size = [256] train_neg_sample_args: [{'distribution': 'none', 'sample_num': 'none', 'alpha': 'none', 'dynamic': False, 'candidate_num': 0}]
+Mon 22 Sep 2025 17:15:04 INFO  [Evaluation]: eval_batch_size = [512] eval_args: [{'split': {'LS': 'valid_and_test'}, 'order': 'TO', 'group_by': 'user', 'mode': {'valid': 'full', 'test': 'full'}}]
+Mon 22 Sep 2025 17:15:08 INFO  EchoMamba4Rec(
+  (item_embedding): Embedding(4501, 64, padding_idx=0)
+  (LayerNorm): LayerNorm((64,), eps=1e-12, elementwise_affine=True)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (mamba_layers): ModuleList(
+    (0): BiMambaLayer(
+      (filter_layer): FilterLayer(
+        (out_dropout): Dropout(p=0.2, inplace=False)
+        (LayerNorm): LayerNorm((64,), eps=1e-12, elementwise_affine=True)
+      )
+      (norms_forward): ModuleList(
+        (0): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      )
+      (norms_backward): ModuleList(
+        (0): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      )
+      (mamba_forwards): ModuleList(
+        (0): Mamba(
+          (in_proj): Linear(in_features=64, out_features=256, bias=False)
+          (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+          (act): SiLU()
+          (x_proj): Linear(in_features=128, out_features=68, bias=False)
+          (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+          (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          (fourier_proj_real): Linear(in_features=200, out_features=200, bias=True)
+          (fourier_proj_image): Linear(in_features=200, out_features=200, bias=True)
+          (fourier_proj_A): Linear(in_features=2, out_features=1, bias=True)
+          (fourier_proj_B): Linear(in_features=2, out_features=1, bias=True)
+          (fourier_proj_C): Linear(in_features=66, out_features=200, bias=True)
+          (tcn): Conv1d(128, 128, kernel_size=(4,), stride=(3,))
+          (tcn_final): Conv1d(200, 200, kernel_size=(2,), stride=(2,))
+          (filter_layer): FrequencyLayer(
+            (out_dropout): Dropout(p=0.2, inplace=False)
+            (LayerNorm): LayerNorm((200,), eps=1e-12, elementwise_affine=True)
+          )
+        )
+      )
+      (mamba_backwards): ModuleList(
+        (0): Mamba(
+          (in_proj): Linear(in_features=64, out_features=256, bias=False)
+          (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+          (act): SiLU()
+          (x_proj): Linear(in_features=128, out_features=68, bias=False)
+          (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+          (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          (fourier_proj_real): Linear(in_features=200, out_features=200, bias=True)
+          (fourier_proj_image): Linear(in_features=200, out_features=200, bias=True)
+          (fourier_proj_A): Linear(in_features=2, out_features=1, bias=True)
+          (fourier_proj_B): Linear(in_features=2, out_features=1, bias=True)
+          (fourier_proj_C): Linear(in_features=66, out_features=200, bias=True)
+          (tcn): Conv1d(128, 128, kernel_size=(4,), stride=(3,))
+          (tcn_final): Conv1d(200, 200, kernel_size=(2,), stride=(2,))
+          (filter_layer): FrequencyLayer(
+            (out_dropout): Dropout(p=0.2, inplace=False)
+            (LayerNorm): LayerNorm((200,), eps=1e-12, elementwise_affine=True)
+          )
+        )
+      )
+      (dropout): Dropout(p=0.2, inplace=False)
+      (glu): GLU(
+        (fc1): Linear(in_features=64, out_features=128, bias=True)
+        (fc2): Linear(in_features=64, out_features=64, bias=True)
+        (dropout): Dropout(p=0.2, inplace=False)
+        (LayerNorm): LayerNorm((64,), eps=1e-12, elementwise_affine=True)
+      )
+      (multi_query_transformer_block): MultiQueryTransformerBlock(
+        (multihead_attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=64, out_features=64, bias=True)
+        )
+        (glu): GLU(
+          (fc1): Linear(in_features=64, out_features=128, bias=True)
+          (fc2): Linear(in_features=64, out_features=64, bias=True)
+          (dropout): Dropout(p=0.2, inplace=False)
+          (LayerNorm): LayerNorm((64,), eps=1e-12, elementwise_affine=True)
+        )
+        (linear1): Linear(in_features=64, out_features=256, bias=True)
+        (dropout): Dropout(p=0.2, inplace=False)
+        (linear2): Linear(in_features=256, out_features=64, bias=True)
+        (norm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+        (norm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+        (dropout1): Dropout(p=0.2, inplace=False)
+        (dropout2): Dropout(p=0.2, inplace=False)
+      )
+    )
+  )
+  (l1): Sequential(
+    (0): Conv1d(200, 200, kernel_size=(4,), stride=(3,))
+    (1): GELU(approximate='none')
+    (2): Linear(in_features=341, out_features=64, bias=True)
+    (3): GELU(approximate='none')
+  )
+  (loss_fct): CrossEntropyLoss()
+)
+Trainable parameters: 1116902
+Mon 22 Sep 2025 17:15:11 INFO  FLOPs: 293145664.0

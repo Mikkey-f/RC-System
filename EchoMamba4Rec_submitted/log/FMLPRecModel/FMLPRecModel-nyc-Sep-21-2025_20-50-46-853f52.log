@@ -1,0 +1,266 @@
+Sun 21 Sep 2025 20:50:46 INFO  ['run.py']
+Sun 21 Sep 2025 20:50:46 INFO  
+General Hyper Parameters:
+gpu_id = 0
+use_gpu = True
+seed = 2020
+state = INFO
+reproducibility = True
+data_path = dataset/nyc
+checkpoint_dir = saved
+show_progress = True
+save_dataset = False
+dataset_save_path = None
+save_dataloaders = False
+dataloaders_save_path = None
+log_wandb = False
+
+Training Hyper Parameters:
+epochs = 300
+train_batch_size = 512
+learner = adam
+learning_rate = 0.001
+train_neg_sample_args = {'distribution': 'none', 'sample_num': 'none', 'alpha': 'none', 'dynamic': False, 'candidate_num': 0}
+eval_step = 1
+stopping_step = 10
+clip_grad_norm = None
+weight_decay = 0.0
+loss_decimal_place = 4
+
+Evaluation Hyper Parameters:
+eval_args = {'split': {'LS': 'valid_and_test'}, 'order': 'TO', 'group_by': 'user', 'mode': {'valid': 'full', 'test': 'full'}}
+repeatable = True
+metrics = ['Hit', 'NDCG', 'MRR']
+topk = [10, 20]
+valid_metric = NDCG@10
+valid_metric_bigger = True
+eval_batch_size = 1024
+metric_decimal_place = 4
+
+Dataset Hyper Parameters:
+field_separator = 	
+seq_separator =  
+USER_ID_FIELD = user_id
+ITEM_ID_FIELD = item_id
+RATING_FIELD = rating
+TIME_FIELD = timestamp
+seq_len = None
+LABEL_FIELD = label
+threshold = None
+NEG_PREFIX = neg_
+load_col = {'inter': ['user_id', 'item_id', 'timestamp']}
+unload_col = None
+unused_col = None
+additional_feat_suffix = None
+rm_dup_inter = None
+val_interval = None
+filter_inter_by_user_or_item = True
+user_inter_num_interval = [5,inf)
+item_inter_num_interval = [5,inf)
+alias_of_user_id = None
+alias_of_item_id = None
+alias_of_entity_id = None
+alias_of_relation_id = None
+preload_weight = None
+normalize_field = None
+normalize_all = None
+ITEM_LIST_LENGTH_FIELD = item_length
+LIST_SUFFIX = _list
+MAX_ITEM_LIST_LENGTH = 200
+POSITION_FIELD = position_id
+HEAD_ENTITY_ID_FIELD = head_id
+TAIL_ENTITY_ID_FIELD = tail_id
+RELATION_ID_FIELD = relation_id
+ENTITY_ID_FIELD = entity_id
+benchmark_filename = None
+
+Other Hyper Parameters: 
+worker = 0
+wandb_project = recbole
+shuffle = True
+require_pow = False
+enable_amp = False
+enable_scaler = False
+transform = None
+numerical_features = []
+discretization = None
+kg_reverse_r = False
+entity_kg_num_interval = [0,inf)
+relation_kg_num_interval = [0,inf)
+MODEL_TYPE = ModelType.SEQUENTIAL
+hidden_dim = 3
+early_stop = True
+early_stop_metric = HR@10
+early_stop_mode = max
+early_stop_patience = 5
+save_best_model = True
+hidden_size = 64
+num_layers = 1
+dropout_prob = 0.2
+loss_type = CE
+no_filters = False
+hidden_act = gelu
+initializer_range = 0.02
+cuda_condition = True
+MODEL_INPUT_TYPE = InputType.POINTWISE
+eval_type = EvaluatorType.RANKING
+single_spec = True
+local_rank = 0
+device = cuda
+valid_neg_sample_args = {'distribution': 'uniform', 'sample_num': 'none'}
+test_neg_sample_args = {'distribution': 'uniform', 'sample_num': 'none'}
+
+
+Sun 21 Sep 2025 20:50:47 INFO  nyc
+The number of users: 6196
+Average actions of users: 77.3047619047619
+The number of items: 4501
+Average actions of items: 106.42288888888889
+The number of inters: 478903
+The sparsity of the dataset: 98.28277526448824%
+Remain Fields: ['user_id', 'item_id', 'timestamp']
+Sun 21 Sep 2025 20:50:51 INFO  [Training]: train_batch_size = [512] train_neg_sample_args: [{'distribution': 'none', 'sample_num': 'none', 'alpha': 'none', 'dynamic': False, 'candidate_num': 0}]
+Sun 21 Sep 2025 20:50:51 INFO  [Evaluation]: eval_batch_size = [1024] eval_args: [{'split': {'LS': 'valid_and_test'}, 'order': 'TO', 'group_by': 'user', 'mode': {'valid': 'full', 'test': 'full'}}]
+Sun 21 Sep 2025 20:50:52 INFO  FMLPRecModel(
+  (item_embeddings): Embedding(4501, 64, padding_idx=0)
+  (position_embeddings): Embedding(200, 64)
+  (LayerNorm): LayerNorm()
+  (dropout): Dropout(p=0.2, inplace=False)
+  (item_encoder): Encoder(
+    (layer): ModuleList(
+      (0): Layer(
+        (filterlayer): FilterLayer(
+          (out_dropout): Dropout(p=0.2, inplace=False)
+          (LayerNorm): LayerNorm()
+        )
+        (intermediate): Intermediate(
+          (dense_1): Linear(in_features=64, out_features=256, bias=True)
+          (dense_2): Linear(in_features=256, out_features=64, bias=True)
+          (LayerNorm): LayerNorm()
+          (dropout): Dropout(p=0.2, inplace=False)
+        )
+      )
+    )
+  )
+  (loss_fct): CrossEntropyLoss()
+)
+Trainable parameters: 347264
+Sun 21 Sep 2025 20:50:52 INFO  FLOPs: 6579264.0
+Sun 21 Sep 2025 20:53:16 INFO  epoch 0 training [time: 144.19s, train loss: 7411.3136]
+Sun 21 Sep 2025 20:53:17 INFO  epoch 0 evaluating [time: 0.35s, valid_score: 0.006000]
+Sun 21 Sep 2025 20:53:17 INFO  valid result: 
+hit@10 : 0.011    hit@20 : 0.0237    ndcg@10 : 0.006    ndcg@20 : 0.0092    mrr@10 : 0.0045    mrr@20 : 0.0054
+Sun 21 Sep 2025 20:53:17 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 20:55:41 INFO  epoch 1 training [time: 144.57s, train loss: 7160.1607]
+Sun 21 Sep 2025 20:55:42 INFO  epoch 1 evaluating [time: 0.23s, valid_score: 0.013100]
+Sun 21 Sep 2025 20:55:42 INFO  valid result: 
+hit@10 : 0.0265    hit@20 : 0.0473    ndcg@10 : 0.0131    ndcg@20 : 0.0183    mrr@10 : 0.0091    mrr@20 : 0.0105
+Sun 21 Sep 2025 20:55:42 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 20:58:08 INFO  epoch 2 training [time: 146.28s, train loss: 6864.3677]
+Sun 21 Sep 2025 20:58:08 INFO  epoch 2 evaluating [time: 0.23s, valid_score: 0.017600]
+Sun 21 Sep 2025 20:58:08 INFO  valid result: 
+hit@10 : 0.0389    hit@20 : 0.0657    ndcg@10 : 0.0176    ndcg@20 : 0.0243    mrr@10 : 0.0113    mrr@20 : 0.0131
+Sun 21 Sep 2025 20:58:08 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 21:00:32 INFO  epoch 3 training [time: 143.99s, train loss: 6745.4859]
+Sun 21 Sep 2025 21:00:32 INFO  epoch 3 evaluating [time: 0.23s, valid_score: 0.019000]
+Sun 21 Sep 2025 21:00:32 INFO  valid result: 
+hit@10 : 0.0405    hit@20 : 0.0746    ndcg@10 : 0.019    ndcg@20 : 0.0275    mrr@10 : 0.0125    mrr@20 : 0.0149
+Sun 21 Sep 2025 21:00:32 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 21:02:59 INFO  epoch 4 training [time: 146.10s, train loss: 6680.9956]
+Sun 21 Sep 2025 21:02:59 INFO  epoch 4 evaluating [time: 0.23s, valid_score: 0.020700]
+Sun 21 Sep 2025 21:02:59 INFO  valid result: 
+hit@10 : 0.0426    hit@20 : 0.0739    ndcg@10 : 0.0207    ndcg@20 : 0.0286    mrr@10 : 0.0142    mrr@20 : 0.0163
+Sun 21 Sep 2025 21:02:59 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 21:05:18 INFO  epoch 5 training [time: 139.55s, train loss: 6637.1269]
+Sun 21 Sep 2025 21:05:19 INFO  epoch 5 evaluating [time: 0.23s, valid_score: 0.019400]
+Sun 21 Sep 2025 21:05:19 INFO  valid result: 
+hit@10 : 0.0397    hit@20 : 0.0736    ndcg@10 : 0.0194    ndcg@20 : 0.0279    mrr@10 : 0.0133    mrr@20 : 0.0156
+Sun 21 Sep 2025 21:07:29 INFO  epoch 6 training [time: 130.09s, train loss: 6603.4411]
+Sun 21 Sep 2025 21:07:29 INFO  epoch 6 evaluating [time: 0.22s, valid_score: 0.019800]
+Sun 21 Sep 2025 21:07:29 INFO  valid result: 
+hit@10 : 0.0416    hit@20 : 0.0738    ndcg@10 : 0.0198    ndcg@20 : 0.0279    mrr@10 : 0.0132    mrr@20 : 0.0154
+Sun 21 Sep 2025 21:09:33 INFO  epoch 7 training [time: 124.50s, train loss: 6575.3114]
+Sun 21 Sep 2025 21:09:34 INFO  epoch 7 evaluating [time: 0.23s, valid_score: 0.020600]
+Sun 21 Sep 2025 21:09:34 INFO  valid result: 
+hit@10 : 0.0425    hit@20 : 0.0738    ndcg@10 : 0.0206    ndcg@20 : 0.0284    mrr@10 : 0.014    mrr@20 : 0.0161
+Sun 21 Sep 2025 21:11:40 INFO  epoch 8 training [time: 126.41s, train loss: 6553.1766]
+Sun 21 Sep 2025 21:11:40 INFO  epoch 8 evaluating [time: 0.24s, valid_score: 0.020400]
+Sun 21 Sep 2025 21:11:40 INFO  valid result: 
+hit@10 : 0.0423    hit@20 : 0.0772    ndcg@10 : 0.0204    ndcg@20 : 0.0291    mrr@10 : 0.0139    mrr@20 : 0.0162
+Sun 21 Sep 2025 21:13:45 INFO  epoch 9 training [time: 124.53s, train loss: 6534.3810]
+Sun 21 Sep 2025 21:13:45 INFO  epoch 9 evaluating [time: 0.23s, valid_score: 0.019400]
+Sun 21 Sep 2025 21:13:45 INFO  valid result: 
+hit@10 : 0.0425    hit@20 : 0.0764    ndcg@10 : 0.0194    ndcg@20 : 0.0278    mrr@10 : 0.0125    mrr@20 : 0.0148
+Sun 21 Sep 2025 21:15:51 INFO  epoch 10 training [time: 125.92s, train loss: 6518.4301]
+Sun 21 Sep 2025 21:15:51 INFO  epoch 10 evaluating [time: 0.24s, valid_score: 0.020700]
+Sun 21 Sep 2025 21:15:51 INFO  valid result: 
+hit@10 : 0.0425    hit@20 : 0.0789    ndcg@10 : 0.0207    ndcg@20 : 0.0298    mrr@10 : 0.0142    mrr@20 : 0.0167
+Sun 21 Sep 2025 21:15:51 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 21:17:56 INFO  epoch 11 training [time: 125.23s, train loss: 6502.5429]
+Sun 21 Sep 2025 21:17:57 INFO  epoch 11 evaluating [time: 0.24s, valid_score: 0.020400]
+Sun 21 Sep 2025 21:17:57 INFO  valid result: 
+hit@10 : 0.0431    hit@20 : 0.0783    ndcg@10 : 0.0204    ndcg@20 : 0.0292    mrr@10 : 0.0137    mrr@20 : 0.0161
+Sun 21 Sep 2025 21:20:02 INFO  epoch 12 training [time: 124.97s, train loss: 6489.5284]
+Sun 21 Sep 2025 21:20:02 INFO  epoch 12 evaluating [time: 0.23s, valid_score: 0.021100]
+Sun 21 Sep 2025 21:20:02 INFO  valid result: 
+hit@10 : 0.046    hit@20 : 0.0793    ndcg@10 : 0.0211    ndcg@20 : 0.0295    mrr@10 : 0.0138    mrr@20 : 0.016
+Sun 21 Sep 2025 21:20:02 INFO  Saving current: saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 21:22:06 INFO  epoch 13 training [time: 123.64s, train loss: 6477.6118]
+Sun 21 Sep 2025 21:22:06 INFO  epoch 13 evaluating [time: 0.22s, valid_score: 0.020200]
+Sun 21 Sep 2025 21:22:06 INFO  valid result: 
+hit@10 : 0.0421    hit@20 : 0.0764    ndcg@10 : 0.0202    ndcg@20 : 0.0287    mrr@10 : 0.0136    mrr@20 : 0.0159
+Sun 21 Sep 2025 21:24:11 INFO  epoch 14 training [time: 124.75s, train loss: 6467.6822]
+Sun 21 Sep 2025 21:24:11 INFO  epoch 14 evaluating [time: 0.23s, valid_score: 0.020200]
+Sun 21 Sep 2025 21:24:11 INFO  valid result: 
+hit@10 : 0.0446    hit@20 : 0.0783    ndcg@10 : 0.0202    ndcg@20 : 0.0287    mrr@10 : 0.013    mrr@20 : 0.0153
+Sun 21 Sep 2025 21:26:15 INFO  epoch 15 training [time: 124.35s, train loss: 6458.7493]
+Sun 21 Sep 2025 21:26:15 INFO  epoch 15 evaluating [time: 0.23s, valid_score: 0.019700]
+Sun 21 Sep 2025 21:26:15 INFO  valid result: 
+hit@10 : 0.0416    hit@20 : 0.0785    ndcg@10 : 0.0197    ndcg@20 : 0.0289    mrr@10 : 0.0131    mrr@20 : 0.0156
+Sun 21 Sep 2025 21:28:20 INFO  epoch 16 training [time: 124.70s, train loss: 6448.7750]
+Sun 21 Sep 2025 21:28:20 INFO  epoch 16 evaluating [time: 0.23s, valid_score: 0.020300]
+Sun 21 Sep 2025 21:28:20 INFO  valid result: 
+hit@10 : 0.0437    hit@20 : 0.0826    ndcg@10 : 0.0203    ndcg@20 : 0.03    mrr@10 : 0.0134    mrr@20 : 0.016
+Sun 21 Sep 2025 21:30:25 INFO  epoch 17 training [time: 124.36s, train loss: 6441.7864]
+Sun 21 Sep 2025 21:30:25 INFO  epoch 17 evaluating [time: 0.25s, valid_score: 0.020000]
+Sun 21 Sep 2025 21:30:25 INFO  valid result: 
+hit@10 : 0.0441    hit@20 : 0.0759    ndcg@10 : 0.02    ndcg@20 : 0.0279    mrr@10 : 0.0128    mrr@20 : 0.0149
+Sun 21 Sep 2025 21:32:31 INFO  epoch 18 training [time: 125.65s, train loss: 6434.1361]
+Sun 21 Sep 2025 21:32:31 INFO  epoch 18 evaluating [time: 0.23s, valid_score: 0.019900]
+Sun 21 Sep 2025 21:32:31 INFO  valid result: 
+hit@10 : 0.0434    hit@20 : 0.0791    ndcg@10 : 0.0199    ndcg@20 : 0.0288    mrr@10 : 0.0129    mrr@20 : 0.0153
+Sun 21 Sep 2025 21:34:37 INFO  epoch 19 training [time: 126.21s, train loss: 6426.9850]
+Sun 21 Sep 2025 21:34:37 INFO  epoch 19 evaluating [time: 0.22s, valid_score: 0.019600]
+Sun 21 Sep 2025 21:34:37 INFO  valid result: 
+hit@10 : 0.0434    hit@20 : 0.078    ndcg@10 : 0.0196    ndcg@20 : 0.0283    mrr@10 : 0.0126    mrr@20 : 0.015
+Sun 21 Sep 2025 21:36:42 INFO  epoch 20 training [time: 124.44s, train loss: 6421.6819]
+Sun 21 Sep 2025 21:36:42 INFO  epoch 20 evaluating [time: 0.23s, valid_score: 0.018300]
+Sun 21 Sep 2025 21:36:42 INFO  valid result: 
+hit@10 : 0.0412    hit@20 : 0.0757    ndcg@10 : 0.0183    ndcg@20 : 0.027    mrr@10 : 0.0115    mrr@20 : 0.0139
+Sun 21 Sep 2025 21:38:48 INFO  epoch 21 training [time: 125.90s, train loss: 6415.6237]
+Sun 21 Sep 2025 21:38:48 INFO  epoch 21 evaluating [time: 0.23s, valid_score: 0.019900]
+Sun 21 Sep 2025 21:38:48 INFO  valid result: 
+hit@10 : 0.0433    hit@20 : 0.081    ndcg@10 : 0.0199    ndcg@20 : 0.0293    mrr@10 : 0.0129    mrr@20 : 0.0155
+Sun 21 Sep 2025 21:40:53 INFO  epoch 22 training [time: 124.81s, train loss: 6410.6963]
+Sun 21 Sep 2025 21:40:53 INFO  epoch 22 evaluating [time: 0.25s, valid_score: 0.017800]
+Sun 21 Sep 2025 21:40:53 INFO  valid result: 
+hit@10 : 0.0391    hit@20 : 0.0786    ndcg@10 : 0.0178    ndcg@20 : 0.0276    mrr@10 : 0.0114    mrr@20 : 0.0141
+Sun 21 Sep 2025 21:42:59 INFO  epoch 23 training [time: 126.23s, train loss: 6405.8555]
+Sun 21 Sep 2025 21:43:00 INFO  epoch 23 evaluating [time: 0.22s, valid_score: 0.018500]
+Sun 21 Sep 2025 21:43:00 INFO  valid result: 
+hit@10 : 0.0404    hit@20 : 0.0785    ndcg@10 : 0.0185    ndcg@20 : 0.0281    mrr@10 : 0.012    mrr@20 : 0.0147
+Sun 21 Sep 2025 21:43:00 INFO  Finished training, best eval result in epoch 12
+Sun 21 Sep 2025 21:43:00 INFO  Training time: 3127.38 seconds
+Sun 21 Sep 2025 21:43:00 INFO  Loading model structure and parameters from saved/FMLPRecModel-Sep-21-2025_20-50-52.pth
+Sun 21 Sep 2025 21:43:01 INFO  The running environment of this training is as follows:
++-------------+---------------+
+| Environment |     Usage     |
++=============+===============+
+| CPU         |    1.30 %     |
++-------------+---------------+
+| GPU         | 2.51 G/6.00 G |
++-------------+---------------+
+| Memory      | 3.12 G/7.62 G |
++-------------+---------------+
+Sun 21 Sep 2025 21:43:01 INFO  best valid : OrderedDict([('hit@10', 0.046), ('hit@20', 0.0793), ('ndcg@10', 0.0211), ('ndcg@20', 0.0295), ('mrr@10', 0.0138), ('mrr@20', 0.016)])
+Sun 21 Sep 2025 21:43:01 INFO  test result: OrderedDict([('hit@10', 0.0446), ('hit@20', 0.0802), ('ndcg@10', 0.0211), ('ndcg@20', 0.0301), ('mrr@10', 0.0142), ('mrr@20', 0.0166)])

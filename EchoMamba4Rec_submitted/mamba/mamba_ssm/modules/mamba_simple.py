@@ -219,6 +219,8 @@ class Mamba(nn.Module):
         self.tcn = nn.Conv1d(128, 128, 4, stride=3)       # 主要的时序卷积
         self.tcn_final = nn.Conv1d(200, 200, 2, stride=2) # 最终的时序卷积
 
+        # todo 加入分频器替代
+        self.filter_layer = FrequencyLayer(hidden_dropout_prob=0.2, hidden_size=200)
     def low_pass_filter_m_dim(self, input_tensor, cutoff_ratio=0.1):
         """
         沿第二维度(m维)的低通滤波器
@@ -274,6 +276,7 @@ class Mamba(nn.Module):
         filtered_output = torch.fft.ifft(filtered_fft, dim=1).real
 
         return filtered_output
+
     def forward(self, hidden_states, inference_params=None):
         """
         Mamba模型的前向传播
@@ -429,8 +432,9 @@ class Mamba(nn.Module):
             # M2Rec的核心创新：对时间步长参数应用低通滤波
             # 这有助于平滑时序特征，去除高频噪声
             # shape保持不变: (B, d_inner, L)
-            dt = self.low_pass_filter_m_dim(dt, cutoff_ratio=0.1)
-
+            # todo
+            # dt = self.low_pass_filter_m_dim(dt, cutoff_ratio=0.1)
+            dt = self.filter_layer(dt)
             # ======================== 第10步：重排状态矩阵B和C ========================
             # 将B矩阵重新排列为适合selective_scan的格式
             # shape: (B*L, d_state) -> (B, d_state, L)
@@ -702,3 +706,34 @@ class Mamba(nn.Module):
                 ssm_state.zero_()
                 
         return conv_state, ssm_state
+
+class FrequencyLayer(nn.Module):
+    def __init__(self, hidden_dropout_prob, hidden_size):
+        super(FrequencyLayer, self).__init__()
+        self.out_dropout = nn.Dropout(hidden_dropout_prob)
+        self.LayerNorm = nn.LayerNorm(hidden_size, eps=1e-12)
+        self.c = 3 // 2 + 1
+        self.sqrt_beta = nn.Parameter(torch.randn(1, 1, hidden_size))
+
+    # 拆分高低频信号
+    def forward(self, input_tensor):
+        # [batch, seq_len, hidden]
+        batch, seq_len, hidden = input_tensor.shape
+        # 转换为频率信号
+
+        x = torch.fft.rfft(input_tensor, dim=1, norm='ortho')
+
+        low_pass = x[:]
+        # 前c个是低频信号
+        low_pass[:, self.c:, :] = 0
+        # 重新转换回时域
+        low_pass = torch.fft.irfft(low_pass, n=seq_len, dim=1, norm='ortho')
+        # 得到高频时域
+        high_pass = input_tensor - low_pass
+        sequence_emb_fft = low_pass + (self.sqrt_beta**2) * high_pass
+
+        # Add & Norm
+        hidden_states = self.out_dropout(sequence_emb_fft)
+        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+
+        return hidden_states

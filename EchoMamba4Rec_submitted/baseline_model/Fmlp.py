@@ -8,6 +8,7 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 from recbole.model.abstract_recommender import SequentialRecommender
+from recbole.model.loss import BPRLoss
 
 
 class FMLPRecModel(SequentialRecommender):
@@ -17,13 +18,19 @@ class FMLPRecModel(SequentialRecommender):
         self.loss_type = config["loss_type"]
         self.num_layers = config["num_layers"]
         self.dropout_prob = config["dropout_prob"]
-
+        self.initializer_range = config["initializer_range"]
+        self.cuda_condition = config["cuda_condition"]
         self.item_embeddings = nn.Embedding(self.n_items, self.hidden_size, padding_idx=0)
         self.position_embeddings = nn.Embedding(self.max_seq_length, self.hidden_size)
         self.LayerNorm = LayerNorm(self.hidden_size, eps=1e-12)
         self.dropout = nn.Dropout(self.dropout_prob)
         self.item_encoder = Encoder(config, self.max_seq_length)
-
+        if self.loss_type == "BPR":
+            self.loss_fct = BPRLoss()
+        elif self.loss_type == "CE":
+            self.loss_fct = nn.CrossEntropyLoss()
+        else:
+            raise NotImplementedError("Make sure 'loss_type' in ['BPR', 'CE']!")
         self.apply(self.init_weights)
 
     def add_position_embedding(self, sequence):
@@ -48,7 +55,7 @@ class FMLPRecModel(SequentialRecommender):
         subsequent_mask = (subsequent_mask == 0).unsqueeze(1)
         subsequent_mask = subsequent_mask.long()
 
-        if self.args.cuda_condition:
+        if self.cuda_condition:
             subsequent_mask = subsequent_mask.cuda()
         extended_attention_mask = extended_attention_mask * subsequent_mask
         extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype) # fp16 compatibility
@@ -70,7 +77,7 @@ class FMLPRecModel(SequentialRecommender):
         if isinstance(module, (nn.Linear, nn.Embedding)):
             # Slightly different from the TF version which uses truncated_normal for initialization
             # cf https://github.com/pytorch/pytorch/pull/5617
-            module.weight.data.normal_(mean=0.0, std=self.args.initializer_range)
+            module.weight.data.normal_(mean=0.0, std=self.initializer_range)
         elif isinstance(module, LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
@@ -80,7 +87,8 @@ class FMLPRecModel(SequentialRecommender):
     def calculate_loss(self, interaction):
         item_seq = interaction[self.ITEM_SEQ]
         item_seq_len = interaction[self.ITEM_SEQ_LEN]
-        seq_output = self.forward(item_seq, item_seq_len)
+        seq_output = self.forward(item_seq)
+        seq_output = seq_output[:, -1, :]
         pos_items = interaction[self.POS_ITEM_ID]
         if self.loss_type == "BPR":
             neg_items = interaction[self.NEG_ITEM_ID]
@@ -91,7 +99,7 @@ class FMLPRecModel(SequentialRecommender):
             loss = self.loss_fct(pos_score, neg_score)
             return loss
         else:  # self.loss_type = 'CE'
-            test_item_emb = self.item_embedding.weight
+            test_item_emb = self.item_embeddings.weight
             logits = torch.matmul(seq_output, test_item_emb.transpose(0, 1))
             loss = self.loss_fct(logits, pos_items)
             return loss
@@ -100,16 +108,17 @@ class FMLPRecModel(SequentialRecommender):
         item_seq = interaction[self.ITEM_SEQ]
         item_seq_len = interaction[self.ITEM_SEQ_LEN]
         test_item = interaction[self.ITEM_ID]
-        seq_output = self.forward(item_seq, item_seq_len)
-        test_item_emb = self.item_embedding(test_item)
+        seq_output = self.forward(item_seq)
+        test_item_emb = self.item_embeddings(test_item)
         scores = torch.mul(seq_output, test_item_emb).sum(dim=1)  # [B]
         return scores
 
     def full_sort_predict(self, interaction):
         item_seq = interaction[self.ITEM_SEQ]
         item_seq_len = interaction[self.ITEM_SEQ_LEN]
-        seq_output = self.forward(item_seq, item_seq_len)
-        test_items_emb = self.item_embedding.weight
+        seq_output = self.forward(item_seq)
+        seq_output = seq_output[:, -1, :]
+        test_items_emb = self.item_embeddings.weight
         scores = torch.matmul(
             seq_output, test_items_emb.transpose(0, 1)
         )  # [B, n_items]
