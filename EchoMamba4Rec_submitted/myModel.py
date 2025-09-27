@@ -1,8 +1,30 @@
+import pickle
+
+import numpy as np
+import pandas as pd
 import torch
 from torch import nn
-from mamba_ssm import Mamba
 from recbole.model.abstract_recommender import SequentialRecommender
 from recbole.model.loss import BPRLoss
+
+from mamba.mamba_ssm.modules.mamba_simple import Mamba
+
+
+def load_data(file):
+    """
+    加载物品元数据嵌入向量
+
+    Args:
+        file (str): pickle文件路径
+
+    Returns:
+        dict: 物品ID到嵌入向量的映射字典
+    """
+    data_load_file = []
+    file_1 = open(file, "rb")
+    # file_1.seek(0)
+    data_load_file = pickle.load(file_1)
+    return data_load_file
 
 class EchoMamba4Rec(SequentialRecommender):
     def __init__(self, config, dataset):
@@ -12,7 +34,8 @@ class EchoMamba4Rec(SequentialRecommender):
         self.loss_type = config["loss_type"]
         self.num_layers = config["num_layers"]
         self.dropout_prob = config["dropout_prob"]
-        
+        self.data = config["dataset"]
+
         # Hyperparameters for Mamba block
         self.d_state = config["d_state"]
         self.d_conv = config["d_conv"]
@@ -36,7 +59,34 @@ class EchoMamba4Rec(SequentialRecommender):
                 max_seq_length=self.max_seq_length
             ) for _ in range(self.num_layers)
         ])
-        
+
+        # ======================== LLM嵌入处理网络 ========================
+        # 用于处理1024维LLM嵌入向量的卷积网络
+        # Input: [batch_size, seq_len, 1024] -> Output: [batch_size, seq_len, hidden_size]
+        self.l1 = nn.Sequential(
+            # 1D卷积：[200, 1024] -> [200, 341] (kernel=4, stride=3)
+            nn.Conv1d(200, 200, 4, stride=3),  # 时序卷积
+            nn.GELU(),  # GELU激活函数
+            # 线性变换：341 -> 64 (hidden_size)
+            nn.Linear(341, 64),  # 降维到hidden_size
+            nn.GELU()  # GELU激活函数
+        )
+
+        # ======================== 融合权重参数 ========================
+        # 用于控制传统嵌入和LLM嵌入的融合比例
+        self.alpha = nn.Parameter(torch.FloatTensor(1) * 0.5, requires_grad=True)  # 传统嵌入权重
+        self.beta = nn.Parameter(torch.FloatTensor(1) * 0.5, requires_grad=True)  # LLM嵌入权重
+
+        # ======================== LLM嵌入向量加载 ========================
+        # 加载预训练的物品元数据嵌入向量 (item_id -> 1024维向量)
+        self.llm_vec = load_data('./dataset/{}/item_meta_emb.pkl'.format(self.data))
+        # 为padding物品(ID=0)设置零向量
+        self.llm_vec[0] = np.array([0.0] * 1024)
+
+        # 将字典转换为DataFrame，便于批量索引
+        # shape: [n_items, 1024] - 每行对应一个物品的1024维LLM嵌入
+        self.llm_matrix = pd.DataFrame([self.llm_vec[i] for i in range(len(self.llm_vec))])
+
         if self.loss_type == "BPR":
             self.loss_fct = BPRLoss()
         elif self.loss_type == "CE":
@@ -56,12 +106,31 @@ class EchoMamba4Rec(SequentialRecommender):
             module.bias.data.zero_()
 
     def forward(self, item_seq, item_seq_len):
+        # ======================== 第1步：获取LLM嵌入向量 ========================
+        # 从第一个样本中提取物品ID序列（注意：这里只处理batch中的第一个样本）
+        # shape: [seq_len] - 物品ID列表
+        item_index = item_seq.clone()[0].cpu().tolist()
+
+        # 根据物品ID从LLM嵌入矩阵中提取对应的嵌入向量
+        # shape: [seq_len, 1024] - 每个物品对应1024维LLM嵌入
+        item_llm_vec = np.array(self.llm_matrix.iloc[item_index, :])
+        item_llm_vec = torch.tensor(item_llm_vec).float().cuda()
+
+        # 通过卷积网络处理LLM嵌入，降维到hidden_size
+        # Input shape: [seq_len, 1024] -> Output shape: [seq_len, hidden_size]
+        llm_output = self.l1(item_llm_vec)
         item_emb = self.item_embedding(item_seq)
-        item_emb = self.dropout(item_emb)
-        item_emb = self.LayerNorm(item_emb)
+
+        # ======================== 第3步：嵌入融合（当前被注释掉）========================
+        # 理论上的融合公式：input_emb = alpha * item_emb + beta * llm_output
+        # 注意：下面的融合代码被注释掉了，当前只使用传统嵌入
+        input_emb = self.alpha * item_emb + self.beta * llm_output
+
+        input_emb = self.dropout(input_emb)
+        input_emb = self.LayerNorm(input_emb)
         
         for i in range(self.num_layers):
-            item_emb = self.mamba_layers[i](item_emb)
+            item_emb = self.mamba_layers[i](input_emb)
         
         seq_output = self.gather_indexes(item_emb, item_seq_len - 1)
         return seq_output
@@ -130,11 +199,13 @@ class BiMambaLayer(nn.Module):
             dim_feedforward=d_model * 4,
             dropout=dropout
         )
+        # ======================== 前馈网络 ========================
+        # self.ffn = FeedForward(d_model=d_model, inner_size=d_model * 4, dropout=dropout)
 
     def forward(self, input_tensor):
         
-        x=input_tensor
-        x = self.filter_layer(x)
+        x = input_tensor
+        # x = self.filter_layer(x)
         
         for i in range(self.num_layers):
             forward_states = self.mamba_forwards[i](x)
@@ -148,7 +219,7 @@ class BiMambaLayer(nn.Module):
             x = forward_states + backward_states
 
         x = self.glu(x)
-       
+        # x = self.ffn(x)
         
         return x
 
@@ -218,3 +289,57 @@ class GLU(nn.Module):
         gated_value = value * torch.sigmoid(gate)
         gated_value = self.fc2(gated_value)  
         return self.LayerNorm(self.dropout(gated_value + x))
+
+
+class FeedForward(nn.Module):
+    """
+    前馈神经网络（FFN）
+
+    实现标准的两层前馈网络：
+    d_model -> inner_size -> d_model
+
+    包含残差连接和LayerNorm
+
+    Args:
+        d_model (int): 输入/输出维度
+        inner_size (int): 隐藏层维度，通常为d_model的4倍
+        dropout (float): Dropout概率，默认0.2
+    """
+
+    def __init__(self, d_model, inner_size, dropout=0.2):
+        super().__init__()
+        # ======================== 两层线性变换 ========================
+        self.w_1 = nn.Linear(d_model, inner_size)  # 第一层：升维
+        self.w_2 = nn.Linear(inner_size, d_model)  # 第二层：降维
+
+        # ======================== 激活函数和正则化 ========================
+        self.activation = nn.GELU()  # GELU激活函数
+        self.dropout = nn.Dropout(dropout)  # Dropout正则化
+        self.LayerNorm = nn.LayerNorm(d_model, eps=1e-12)  # 层归一化
+
+    def forward(self, input_tensor):
+        """
+        前馈网络前向传播
+
+        Args:
+            input_tensor (torch.Tensor): 输入张量 [batch_size, seq_len, d_model]
+
+        Returns:
+            torch.Tensor: 输出张量 [batch_size, seq_len, d_model]
+        """
+        # ======================== 第一层变换 ========================
+        # shape: [batch_size, seq_len, d_model] -> [batch_size, seq_len, inner_size]
+        hidden_states = self.w_1(input_tensor)
+        hidden_states = self.activation(hidden_states)  # GELU激活
+        hidden_states = self.dropout(hidden_states)  # Dropout正则化
+
+        # ======================== 第二层变换 ========================
+        # shape: [batch_size, seq_len, inner_size] -> [batch_size, seq_len, d_model]
+        hidden_states = self.w_2(hidden_states)
+        hidden_states = self.dropout(hidden_states)  # Dropout正则化
+
+        # ======================== 残差连接 + LayerNorm ========================
+        # shape保持: [batch_size, seq_len, d_model]
+        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+
+        return hidden_states
